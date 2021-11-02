@@ -1,0 +1,26 @@
+build website:
+  stage: build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+  image: node:12
+  script:
+    - npm install
+    - npm run build
+    - sed -i 's|<meta charset=utf-8>|<meta charset=utf-8><base href="/" />|g' dist/index.html
+    - sed -i 's|/css/|css/|g' dist/index.html
+    - sed -i 's|/js/|js/|g' dist/index.html
+  artifacts:
+    paths:
+      - dist
+      - public
+deploy to s3:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
+  script:
+    - aws --version
+    - aws s3 rm s3://$S3_BUCKET --recursive
+    - aws s3 cp dist s3://$S3_BUCKET --recursive
